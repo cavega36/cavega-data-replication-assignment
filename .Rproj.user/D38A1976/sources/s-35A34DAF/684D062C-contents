@@ -1,0 +1,14 @@
+---
+title: "Data Replication Assignment"
+author: "C. Vega"
+date: "12/12/2019"
+output: html_document
+---
+#  Data Replication Assignment 
+
+First, we will load the dataset and check for normality.
+```{r}
+setwd()
+SpecData <- read.csv(Documents/School Stuff/Fall 2019/AN597/GitHubRepositories/cavega-data-replication-assignment/specvariable_repdat.csv)
+```
+
