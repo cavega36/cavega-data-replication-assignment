@@ -6,9 +6,21 @@ output: html_document
 ---
 #  Data Replication Assignment 
 
-First, we will load the dataset and check for normality.
+First, we will read in the dataset and check for normality.
 ```{r}
-setwd()
-SpecData <- read.csv(Documents/School Stuff/Fall 2019/AN597/GitHubRepositories/cavega-data-replication-assignment/specvariable_repdat.csv)
+# Load in specimen name/variable dataset and name it "SpecData"
+SpecData <- read.csv("specvariable_repdata.csv")
+head(SpecData)
+summary(SpecData)
 ```
+
+Now that we have the data loaded in we want to recreate the first set of boxplots based on dental topography measurements for 5 types of feeding behaviors measured in the Winchester et al. (2014) paper. 
+
+```{r}
+boxplot(log(Body_mass_female_mean)~Family,d)
+```
+
+
+
+
 
