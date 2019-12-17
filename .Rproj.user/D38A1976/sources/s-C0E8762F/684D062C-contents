@@ -8,6 +8,11 @@ output:
         toc_float: true
         theme: yeti
 ---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, comment = "##", prompt = TRUE, 
+     tidy = TRUE, tidy.opts = list(width.cutoff = 75), fig.path = "img/")
+```
+
 # Data Replication Assignment 
 
 <center>
