@@ -1,0 +1,2 @@
+"0",""
+"0","qqnorm(SpecData$Shearing.ratio, main=""Shearing Ratio Normality Check"")"

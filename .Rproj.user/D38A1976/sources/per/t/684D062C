@@ -1,0 +1,28 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1576198863557.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2202580262",
+    "id" : "684D062C",
+    "lastKnownWriteTime" : 1576553621,
+    "last_content_update" : 1576553621552,
+    "path" : "~/Documents/School Stuff/Fall 2019/AN597/GitHub Repositories/cavega-data-replication-assignment/Vega_Markdown.Rmd",
+    "project_path" : "Vega_Markdown.Rmd",
+    "properties" : {
+        "cursorPosition" : "32,197",
+        "docOutlineSize" : "123",
+        "docOutlineVisible" : "0",
+        "scrollLine" : "29",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}

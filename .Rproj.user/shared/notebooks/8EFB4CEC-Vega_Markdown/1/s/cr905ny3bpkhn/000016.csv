@@ -1,0 +1,2 @@
+"0",""
+"0","RFI <- qqnorm(SpecData$RFI, main=""RFI Normality Check"")"

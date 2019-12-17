@@ -1,0 +1,329 @@
+---
+title: "Data Replication Assignment"
+author: "C. Vega"
+date: "12/12/2019"
+output: 
+    html_document:
+        toc: true
+        toc_float: true
+        theme: yeti
+---
+#  Data Replication Assignment 
+
+<center>
+
+![](https://media.giphy.com/media/hqm1CUpaOPxeEG8gY1/giphy.gif)
+
+</center>
+
+## Introduction
+
+This dataset comes from Winchester et al.'s (2014) article, "Dental Topography of Platyrrhines and Prosimians: Convergence and Contrasts."  The main question of the article asks if dietary preference can be figured out based on tooth measurements and, if so, are platyrrhines showing enough topographical variation to apply these models to extinct taxa? After running a mix of ANOVA, PGLS, and DFA, main results seem to conclude that platyrrhines are broadly similar to the prosimians. However, using dietary categories to assign groups can still be accurately assigned 82% of the time with a prosimian-only sample and 94% of the time with a platyrrhine only sample, with a combined percentage of 77% when testing “unknown” individuals. For clarity, here is a list of the main topographic measurements done in this study on platyrrhine samples: 
+
+
+**Variables measured**: Five variables on M2 
+
+1. Shearing Ratio (SR)- measure of length of molar shearing crest relative to body size
+2. Shearing Quotient (SQ)
+3. Dirichlet normal energy (DNE)- measure of total curvature across a tooth surface
+4. Relief Index (RFI)- Ratio of the three-dimensional true surface area of a tooth to the area occupied by the tooth surface’s projection into a 2-D dimensional occlusal plane
+5. Orientation patch count-rotated (OPCR)- the number of discrete contiguous areas of similar aspect
+
+
+For my replication, I chose to focus on testing each variable for normality, using boxplots to illustrate relationships between each variable when separated by prosimians and platyrrhines (**Figure 2**), the variability between each topographic measurement using ANOVA and linear models (**Table 3**), and using a linear discriminant analysis to test each topographic variable against diet based on group (**Figure 3** and **Figure 4**). 
+
+## Load Packages and Data
+
+First, we will read in the dataset and check for normality.
+```{r}
+library(ggplot2)
+library(dplyr)
+library(MASS)
+
+# Load in specimen name/variable dataset and name it "SpecData"
+SpecData <- read.csv("specvariable_repdata.csv")
+
+# Quick look at the dataset
+head(SpecData)
+
+#Quick summary of dataset values
+summary(SpecData)
+```
+
+## Normality Check
+
+Now I will use qqplots to check for normality in each of the topographic variables. 
+```{r}
+# For M2 Length
+qqnorm(SpecData$M2.Length, main="M2.Length Normality Check")
+qqline(SpecData$M2.Length, col="black")
+
+# For OPCR
+qqnorm(SpecData$OPCR, main="OPCR Normality Check")
+qqline(SpecData$OPCR, col="black")
+
+qqnorm(SpecData$Shearing.ratio, main="Shearing Ratio Normality Check")
+qqline(SpecData$Shearing.ratio, col="black")
+
+qqnorm(SpecData$Shearing.quotient, main="Shearing Quotient Normality Check")
+qqline(SpecData$Shearing.quotient, col="black")
+
+qqnorm(SpecData$DNE, main="DNE Normality Check")
+qqline(SpecData$DNE, col="black")
+
+RFI <- qqnorm(SpecData$RFI, main="RFI Normality Check")
+qqline(SpecData$RFI, col="black")
+
+```
+
+As can be seen, the plots seem to skew off the best fit line at each end. This is likely due to some extremes in each topographic variable that skews out the expected distribution. 
+
+## Dental Topographic Variation
+
+Now that we have the data loaded in, we want to recreate the first set of boxplots (**Figure 2**) based on dental topography measurements for 5 types of feeding behaviors measured in the Winchester et al. (2014) paper. 
+
+```{r}
+# Recreating Figure 2: Boxplots of each Dental topography to the type of diet
+library(forcats)
+OPCR <- SpecData %>%
+  mutate(Diet = fct_relevel(Diet, 
+            "Insectivory", "Folivory", "Omnivory", 
+            "Frugivory", "Hard-Object Feeding")) %>%
+  ggplot( aes(x=Diet, y=OPCR)) +
+    geom_boxplot(aes(fill=Group)) +
+    xlab("Diet")
+
+SR <- SpecData %>%
+  mutate(Diet = fct_relevel(Diet, 
+            "Insectivory", "Folivory", "Omnivory", 
+            "Frugivory", "Hard-Object Feeding")) %>%
+  ggplot( aes(x=Diet, y=Shearing.ratio)) +
+    geom_boxplot(aes(fill=Group)) +
+    xlab("Diet")
+
+SQ <- SpecData %>%
+  mutate(Diet = fct_relevel(Diet, 
+            "Insectivory", "Folivory", "Omnivory", 
+            "Frugivory", "Hard-Object Feeding")) %>%
+  ggplot( aes(x=Diet, y=Shearing.quotient)) +
+    geom_boxplot(aes(fill=Group)) +
+    xlab("Diet")
+
+DNE <- SpecData %>%
+  mutate(Diet = fct_relevel(Diet, 
+            "Insectivory", "Folivory", "Omnivory", 
+            "Frugivory", "Hard-Object Feeding")) %>%
+  ggplot( aes(x=Diet, y=DNE)) +
+    geom_boxplot(aes(fill=Group)) +
+    xlab("Diet")
+
+RFI <- SpecData %>%
+  mutate(Diet = fct_relevel(Diet, 
+            "Insectivory", "Folivory", "Omnivory", 
+            "Frugivory", "Hard-Object Feeding")) %>%
+  ggplot( aes(x=Diet, y=RFI)) +
+    geom_boxplot(aes(fill=Group)) +
+    xlab("Diet")
+
+#Call each to check on the data, note that 6 rows are removed in the shearing.ratio and shearing.quotient due to lack of data for Daubentonidae
+OPCR
+SR 
+SQ 
+DNE
+RFI
+```
+
+<center> **Winchester et al. (2014) Figure 2** </center>
+
+<center>   <img src="Winchester_Figure2.jpg">  </center>
+
+Here is **Figure 2** from the Winchester Paper. My replicated versions match the original versions, however, mine lack some outlier points opposed to the original boxplots. 
+
+## ANOVA and Linear Modeling
+
+We will next include two-way ANOVAs for the platyrrhine sample by dietary group factor. But first, we should look at quick plots to see how our data pans out.
+```{r}
+#Checking the Class of Group and Diet
+class(SpecData$Group)
+class(SpecData$Diet)
+
+# Making a quick plot to look at the differences in dietary type
+plot (SpecData$Diet ~ SpecData$Group)
+
+```
+
+
+Now that we can visualize the data, let's make our first linear model to test if there are significant differences between each based on Group, Diet, and Group x Diet. This shows the variation in each topographic factor within each Group that is explained by Diet. The analysis here replicates Table 3 from the Winchester paper. I will also create a linear model equation for each in order to verify the p-values stated in the Winchester et al. paper.
+```{r}
+# Running 2-Way ANOVA for DNE
+DNEaov <- aov(data = SpecData, DNE~ Group * Diet)
+summary(DNEaov)
+
+  # Quick Plot of DNE ANOVA
+  par(mfrow = c(2, 2))
+  plot(DNEaov)
+
+# Running linear model for DNE to retrieve p-value
+DNElm <- lm(data = SpecData, DNE~ Group * Diet)
+summary(DNElm)
+```
+
+Now that we have one done, we will do the same for RFI, OPCR, SR, and SQ. You will notice that the F values vary, but the p-values stay consistent to the table. 
+```{r}
+# Running 2-Way ANOVA for RFI
+RFIaov <- aov(data = SpecData, RFI~ Group * Diet)
+summary(RFIaov)
+
+  # Quick Plot of DNE ANOVA
+  par(mfrow = c(2, 2))
+  plot(RFIaov)
+  
+  # Running linear model for RFI to retrieve p-value
+  RFIlm <- lm(data = SpecData, RFI~ Group * Diet)
+  summary(RFIlm)
+
+# Running 2-Way ANOVA for OPCR
+OPCRaov <- aov(data = SpecData, OPCR~ Group * Diet)
+summary(OPCRaov)
+
+  # Quick Plot of DNE ANOVA
+  par(mfrow = c(2, 2))
+  plot(OPCRaov)
+  
+  # Running linear model for DNE to retrieve p-value
+  OPCRlm <- lm(data = SpecData, OPCR~ Group * Diet)
+  summary(OPCRlm)
+  
+# Running 2-Way ANOVA for SR
+SRaov <- aov(data = SpecData, Shearing.ratio~ Group * Diet)
+summary(SRaov)
+
+  # Quick Plot of SR ANOVA
+  par(mfrow = c(2, 2))
+  plot(SRaov)
+  
+  # Running linear model for SR to retrieve p-value
+  SRlm <- lm(data = SpecData, Shearing.ratio~ Group * Diet)
+  summary(SRlm)
+  
+# Running 2-Way ANOVA for SR
+SQaov <- aov(data = SpecData, Shearing.quotient~ Group * Diet)
+summary(SQaov)
+
+  # Quick Plot of SR ANOVA
+  par(mfrow = c(2, 2))
+  plot(SQaov)
+  
+  # Running linear model for SR to retrieve p-value
+  SQlm <- lm(data = SpecData, Shearing.quotient~ Group * Diet)
+  summary(SQlm)
+```
+Now that we have compared all of the df, F, and p-values to Table 3. We can see that there is a trend toward a larger F value than the ones recorded in Table 3. There is generally a trend of Group and Diet having larger values than the (Group * Diet) F-values. 
+
+<center> <img src="Winchester_Table_3.png"> </center>
+
+## LDA Analysis
+Now we will try to run the first discriminant function analysis of first just prosimians.
+```{r}
+library(dplyr)
+library(MASS)
+
+## Building a Model for Group based on Diet
+model <- lda(Diet~DNE+RFI+OPCR+M2.Length, data = SpecData %>% filter(Group=='Prosimii'))
+model
+
+predictions <- model %>% predict(SpecData)
+names(predictions)
+
+# Predicted classes
+head(predictions$class, 6)
+# Predicted probabilities of class memebership.
+head(predictions$posterior, 6) 
+# Linear discriminants
+head(predictions$x, 3)
+
+
+# Make graph
+lda.data <- cbind(SpecData %>% filter(Group=='Prosimii'), predict(model)$x)
+ggplot(lda.data, aes(-LD1,-LD2), inherit.aes = FALSE) +
+  geom_point(aes(color = Diet))
+
+
+```
+<center> <img src="Winchester_Figure3.png"> </center>
+
+
+Next, we will do one for only Platyrrhines. It is important to note that the original paper does not include a platyrrhine-only DFA. 
+```{r}
+library(dplyr)
+library(MASS)
+
+## Building a Model for Group based on Diet
+model2 <- lda(Diet~DNE+RFI+OPCR+M2.Length, data = SpecData %>% filter(Group=='Platyrrhini'))
+model2
+
+predictions <- model2 %>% predict(SpecData)
+names(predictions)
+
+# Predicted classes
+head(predictions$class, 6)
+# Predicted probabilities of class memebership.
+head(predictions$posterior, 6) 
+# Linear discriminants
+head(predictions$x, 3)
+
+
+# Make graph
+lda.data2 <- cbind(SpecData %>% filter(Group=='Platyrrhini'), predict(model2)$x)
+ggplot(lda.data2, aes(-LD1,-LD2), inherit.aes = FALSE) +
+  geom_point(aes(color = Diet))
+
+```
+
+Finally, we will replicate **Figure 4** from the paper to show a discriminant function analysis of topographic metrics and molar area for platyrrhines and prosimians. 
+```{r}
+library(dplyr)
+library(MASS)
+
+## Building a Model for Group based on Diet
+model3 <- lda(Diet~DNE+RFI+OPCR+M2.Length, data = SpecData)
+model3
+
+predictions <- model3 %>% predict(SpecData)
+names(predictions)
+
+# Predicted classes
+head(predictions$class, 6)
+# Predicted probabilities of class memebership.
+head(predictions$posterior, 6) 
+# Linear discriminants
+head(predictions$x, 3)
+
+
+# Make graph
+lda.data3 <- cbind(SpecData, predict(model3)$x)
+ggplot(lda.data3, aes(-LD1,-LD2), inherit.aes = FALSE) +
+  geom_point(aes(color = Diet, shape = Group))
+
+```
+
+<center> <img src="Winchester_Figure4.png"> </center>
+
+Success! Now we have successfully replicated **Figure 4**. You'll notice the main difference is that color is used in this graph to discern Diet whereas shapes are used to discern Group. I do not think this is more effective than the shape drawing but I do think that the addition of color helps quickly differentiate between Group and Diet.
+
+## Conclusion
+
+After running these analyses, I have come to the overall conclusion that Winchester et al. (2014) have allowed for highly replicable research. Their datasets are complete and they explain many of their shortcomings throughout. I did notice that when using qqnorm() for each topograpic variable, there seemes to be a lot of non-normal skewing on the ends. This seems to be due to extreme outliers in the dataset.
+
+When replicating **Figure 2**, I found that the graphs were almost exactly the same and found it fairly simple to replicate them. Using ANOVA and linear models to test the information in Table 3 was also a good test on earlier modules from the course. However, I noticed that the F statistics differed greatly in comparison to the original Table 3 values. I was unable to find a specific reason for this, but believe that it may have something to do with the different statistics programming software used by Winchester et al.
+
+The most rewarding and also most difficult to replicate were **Figures 3 and 4**. Once **Figure 3** was created, I had no problem creating a platyrrhine-only figure. This figure was not included in the original paper even though I think it would be a useful visualization of the paper's sample. The creation of Figure 4 gave the most robust visualization of the dataset.
+
+Overall, this was a positive experience that allowed me to dig into a dataset and test replicability. 
+
+<center>
+
+![](https://media.giphy.com/media/26tP8qAV3GyP1Pdde/giphy.gif)
+
+</center>
+

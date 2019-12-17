@@ -1,0 +1,61 @@
+---
+title: "PGLS Failed Attempt"
+author: "C. Vega"
+date: "12/16/2019"
+output: html_document
+---
+
+## PGLS 
+
+
+In order to better understand phylogenetic relationships, we want to run a PGLS on the topographic tooth measurements. We will start by loading in the tree data from 10k trees, using almost all of the species used in the analysis.
+```{r}
+library(geiger)
+library(ape)
+library(nlme)
+library(phytools)
+pglstree <- read.nexus("consensusTree_10kTrees_Primates_Version3.nex")
+
+# Summarize loaded tree data
+summary(pglstree)
+plot(pglstree)
+
+#Check to make sure both have the same species listed
+name.check(SpecData, pglstree)
+```
+
+Next we will run the PGLS for a correlation between all pairs of topographic variables.
+```{r}
+#pglsModel2 <- gls(Group ~ Diet, correlation = corBrownian(phy = pglstree),
+   # data = SpecData, method = "ML")
+#anova(pglsModel2)
+```
+
+
+Running PGLS using Caper
+```{r}
+library(ape)
+library(caper)
+library(picante)
+
+SpecData <- read.csv("specvariable_repdata.csv")
+pglstree <- read.nexus("consensusTree_10kTrees_Primates_Version3.nex")
+
+zoom(pglstree, list(grep("Prosimii", pglstree$tip.label)), subtree=FALSE)
+
+zoom(pglstree, list(grep("Cercopithecus", pglstree$tip.label)), subtree=TRUE)
+
+is.binary.tree(pglstree)
+
+pglstree = multi2di(pglstree)
+
+DropFromData = setdiff(SpecData$Binomial, pglstree$tip.label)
+
+```
+
+
+
+```{r}
+
+```
+
